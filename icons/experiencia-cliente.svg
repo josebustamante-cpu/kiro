@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Experiencia Cliente">
+  <circle cx="100" cy="100" r="90" fill="#123A5E"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="92" cy="78" r="22"/>
+    <path d="M55 142 C55 110 129 110 129 142"/>
+    <path d="M140 50 c-6 -7 -18 -3 -18 7 c0 9 18 19 18 19 c0 0 18 -10 18 -19 c0 -10 -12 -14 -18 -7 Z" fill="#E8711E" stroke="#E8711E"/>
+  </g>
+</svg>

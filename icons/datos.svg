@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Datos">
+  <circle cx="100" cy="100" r="90" fill="#123A5E"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="100" cy="63" rx="43" ry="17"/>
+    <path d="M57 63 V120 a43 17 0 0 0 86 0 V63"/>
+    <path d="M57 92 a43 17 0 0 0 86 0"/>
+  </g>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" width="960" height="300" font-family="Calibri, Arial, sans-serif">
+  <rect width="960" height="300" fill="#FFFFFF"/>
+
+  <!-- DATOS -->
+  <g transform="translate(40,20) scale(0.8)">
+    <circle cx="100" cy="100" r="90" fill="#123A5E"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="100" cy="63" rx="43" ry="17"/>
+      <path d="M57 63 V120 a43 17 0 0 0 86 0 V63"/>
+      <path d="M57 92 a43 17 0 0 0 86 0"/>
+    </g>
+  </g>
+  <text x="160" y="248" text-anchor="middle" font-size="26" font-weight="bold" fill="#123A5E">DATOS</text>
+
+  <!-- DISTRIBUCION -->
+  <g transform="translate(280,20) scale(0.8)">
+    <circle cx="100" cy="100" r="90" fill="#E8711E"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="40" y="74" width="68" height="46" rx="4"/>
+      <path d="M108 90 H132 L150 108 V120 H108 Z"/>
+      <circle cx="66" cy="134" r="12"/>
+      <circle cx="132" cy="134" r="12"/>
+    </g>
+  </g>
+  <text x="400" y="248" text-anchor="middle" font-size="26" font-weight="bold" fill="#E8711E">DISTRIBUCION</text>
+
+  <!-- EXPERIENCIA CLIENTE -->
+  <g transform="translate(520,20) scale(0.8)">
+    <circle cx="100" cy="100" r="90" fill="#123A5E"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="92" cy="78" r="22"/>
+      <path d="M55 142 C55 110 129 110 129 142"/>
+      <path d="M140 50 c-6 -7 -18 -3 -18 7 c0 9 18 19 18 19 c0 0 18 -10 18 -19 c0 -10 -12 -14 -18 -7 Z" fill="#E8711E" stroke="#E8711E"/>
+    </g>
+  </g>
+  <text x="640" y="240" text-anchor="middle" font-size="24" font-weight="bold" fill="#123A5E">EXPERIENCIA</text>
+  <text x="640" y="268" text-anchor="middle" font-size="24" font-weight="bold" fill="#123A5E">CLIENTE</text>
+
+  <!-- RETAIL -->
+  <g transform="translate(760,20) scale(0.8)">
+    <circle cx="100" cy="100" r="90" fill="#E8711E"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M48 74 H152 V92 H48 Z"/>
+      <path d="M48 92 q13 13 26 0 q13 13 26 0 q13 13 26 0 q13 13 26 0"/>
+      <path d="M58 104 V150 H142 V104"/>
+      <rect x="86" y="120" width="28" height="30"/>
+    </g>
+  </g>
+  <text x="880" y="248" text-anchor="middle" font-size="26" font-weight="bold" fill="#E8711E">RETAIL</text>
+</svg>
