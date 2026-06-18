@@ -273,7 +273,7 @@ def icon_cliente(idg, cx, cy):
     s.append(shape(idg, cx - IN(0.3), cy + IN(0.0), IN(0.58), IN(0.34),
                    prst='trapezoid', line=WH, line_w=LW, name='body'))
     s.append(shape(idg, cx + IN(0.12), cy - IN(0.42), IN(0.24), IN(0.22),
-                   prst='heart', fill=ORANGE, name='heart'))
+                   prst='heart', fill=WH, name='heart'))
     return s
 
 def icon_retail(idg, cx, cy):
@@ -310,48 +310,57 @@ def slide2():
                   'aborda estos retos de manera integral, bajo una unica '
                   'estrategia omnicanal.', sz=1400, color=DARK), after=0,
               line=112000)]))
-    # 4 tarjetas verticales
+    # 4 tarjetas verticales (diseno dinamico, insignias naranjas)
     cards = [
-        ('Datos', NAVY, [
+        ('Datos', [
             'Mas de 35.000 clientes con direcciones de calidad dispar.',
             'Multiples canales de captura sin estandar unico.']),
-        ('Distribucion', ORANGE, [
+        ('Distribucion', [
             'Entregas fallidas por errores de direccion.',
             'Reprocesos y carga retornada al CD.']),
-        ('Experiencia Cliente', NAVY, [
+        ('Experiencia Cliente', [
             'Retrasos en las entregas.',
             'Falta de entregas same day en la RM.']),
-        ('Retail', ORANGE, [
+        ('Retail', [
             'Venta limitada al stock de cada tienda.',
             'Sin visibilidad del inventario de la red.']),
     ]
     x0 = IN(0.62)
     cw = IN(2.875)
     gx = IN(0.205)
-    y0 = IN(2.75)
-    ch = IN(4.0)
-    for k, (title, color, items) in enumerate(cards):
+    y0 = IN(2.7)
+    ch = IN(4.05)
+    HALO = 'FBE2CB'  # naranja claro (halo)
+    for k, (title, items) in enumerate(cards):
         cx = x0 + k * (cw + gx)
         ccx = cx + cw // 2
         # tarjeta
         s.append(shape(idg, cx, y0, cw, ch, fill=CARD, line=LINEG, line_w=9525,
                        prst='roundRect', shadow=True, name='card'))
-        # insignia + icono
-        bcy = y0 + IN(0.95)
-        s += icon_badge(idg, ccx, bcy, IN(1.3), color)
+        # marco superior navy (esquinas sup. redondeadas)
+        s.append(shape(idg, cx, y0, cw, IN(0.16), fill=NAVY,
+                       prst='round2SameRect', name='top'))
+        # marco inferior naranja (esquinas inf. redondeadas)
+        s.append(shape(idg, cx, y0 + ch - IN(0.16), cw, IN(0.16), fill=ORANGE,
+                       prst='round2SameRect', flipv=True, name='bot'))
+        # halo + insignia naranja + icono blanco
+        bcy = y0 + IN(1.0)
+        s.append(shape(idg, ccx - IN(0.8), bcy - IN(0.8), IN(1.6), IN(1.6),
+                       fill=HALO, prst='ellipse', name='halo'))
+        s += icon_badge(idg, ccx, bcy, IN(1.3), ORANGE)
         s += ICON_FN[title](idg, ccx, bcy)
         # titulo
-        s.append(textbox(idg, cx + IN(0.1), y0 + IN(1.75), cw - IN(0.2), IN(0.7),
-            [para(run(title, sz=1500, b=True, color=color), algn='ctr',
+        s.append(textbox(idg, cx + IN(0.1), y0 + IN(1.78), cw - IN(0.2), IN(0.7),
+            [para(run(title, sz=1500, b=True, color=NAVY), algn='ctr',
                   after=0, line=96000)]))
-        # subrayado corto
-        s.append(shape(idg, ccx - IN(0.35), y0 + IN(2.42), IN(0.7), IN(0.04),
-                       fill=color, name='uline'))
+        # subrayado naranja
+        s.append(shape(idg, ccx - IN(0.32), y0 + IN(2.42), IN(0.64), IN(0.06),
+                       fill=ORANGE, prst='roundRect', name='uline'))
         # bullets
-        pp = [para(run(it, sz=1200, color=DARK), bullet='•', bullet_color=color,
+        pp = [para(run(it, sz=1200, color=DARK), bullet='▸', bullet_color=ORANGE,
                    after=260, line=104000) for it in items]
-        s.append(textbox(idg, cx + IN(0.22), y0 + IN(2.62), cw - IN(0.4),
-                         ch - IN(2.75), pp))
+        s.append(textbox(idg, cx + IN(0.24), y0 + IN(2.62), cw - IN(0.44),
+                         ch - IN(2.9), pp))
     return slide_xml(s)
 
 # ---------- LAMINA 3: Los 4 Frentes (pilares) ----------
