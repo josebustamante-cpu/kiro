@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 250" width="240" height="250" role="img" aria-label="Visibilidad 3D">
+  <defs>
+    <!-- Esfera (efecto 3D del fondo) -->
+    <radialGradient id="sphere" cx="36%" cy="30%" r="75%">
+      <stop offset="0%"  stop-color="#3E80B8"/>
+      <stop offset="45%" stop-color="#1C5A8C"/>
+      <stop offset="80%" stop-color="#123A5E"/>
+      <stop offset="100%" stop-color="#0A2238"/>
+    </radialGradient>
+    <!-- Iris con profundidad -->
+    <radialGradient id="iris" cx="40%" cy="35%" r="70%">
+      <stop offset="0%"  stop-color="#2E6FA5"/>
+      <stop offset="60%" stop-color="#123A5E"/>
+      <stop offset="100%" stop-color="#08203A"/>
+    </radialGradient>
+    <!-- Globo ocular (blanco con sombreado) -->
+    <radialGradient id="eyeball" cx="42%" cy="32%" r="80%">
+      <stop offset="0%"  stop-color="#FFFFFF"/>
+      <stop offset="75%" stop-color="#EAF0F5"/>
+      <stop offset="100%" stop-color="#C7D3DD"/>
+    </radialGradient>
+    <!-- Aro de relieve -->
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6FA6D2"/>
+      <stop offset="100%" stop-color="#06192B"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <!-- Sombra proyectada -->
+  <ellipse cx="120" cy="228" rx="78" ry="14" fill="#0A1722" opacity="0.35" filter="url(#soft)"/>
+
+  <!-- Aro / relieve exterior -->
+  <circle cx="120" cy="115" r="104" fill="url(#rim)"/>
+  <!-- Esfera principal -->
+  <circle cx="120" cy="115" r="98" fill="url(#sphere)"/>
+
+  <!-- Brillo especular superior -->
+  <ellipse cx="92" cy="64" rx="56" ry="30" fill="#FFFFFF" opacity="0.16" filter="url(#soft)"/>
+
+  <!-- Ojo: globo (forma de almendra) -->
+  <path d="M52 115 Q120 60 188 115 Q120 170 52 115 Z" fill="url(#eyeball)"
+        stroke="#0A2238" stroke-width="3"/>
+  <!-- Iris -->
+  <circle cx="120" cy="115" r="30" fill="url(#iris)" stroke="#08203A" stroke-width="2"/>
+  <!-- Pupila -->
+  <circle cx="120" cy="115" r="13" fill="#06182A"/>
+  <!-- Reflejo especular del ojo -->
+  <circle cx="111" cy="106" r="6.5" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="128" cy="122" r="3" fill="#FFFFFF" opacity="0.5"/>
+
+  <!-- Borde inferior oscuro para volumen -->
+  <path d="M30 150 a98 98 0 0 0 180 0" fill="none" stroke="#06141F"
+        stroke-width="6" opacity="0.25"/>
+</svg>
