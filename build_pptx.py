@@ -89,7 +89,7 @@ def textbox(idg, x, y, cx, cy, paras, anchor='t', wrap='square', name='tb'):
 
 def shape(idg, x, y, cx, cy, fill=None, line=None, line_w=12700,
           prst='rect', paras=None, anchor='t', shadow=False, name='sp',
-          grad=None):
+          grad=None, flipv=False, fliph=False):
     if grad:
         c1, c2 = grad
         fillxml = (f'<a:gradFill rotWithShape="1"><a:gsLst>'
@@ -115,9 +115,14 @@ def shape(idg, x, y, cx, cy, fill=None, line=None, line_w=12700,
         body = ('<p:txBody><a:bodyPr/><a:lstStyle/><a:p>'
                 '<a:endParaRPr lang="es-ES"/></a:p></p:txBody>')
     geom = f'<a:prstGeom prst="{prst}"><a:avLst/></a:prstGeom>'
+    flip = ''
+    if flipv:
+        flip += ' flipV="1"'
+    if fliph:
+        flip += ' flipH="1"'
     return (f'<p:sp><p:nvSpPr><p:cNvPr id="{idg()}" name="{name}"/>'
             f'<p:cNvSpPr/><p:nvPr/></p:nvSpPr>'
-            f'<p:spPr><a:xfrm><a:off x="{x}" y="{y}"/>'
+            f'<p:spPr><a:xfrm{flip}><a:off x="{x}" y="{y}"/>'
             f'<a:ext cx="{cx}" cy="{cy}"/></a:xfrm>{geom}{fillxml}{lnxml}'
             f'{effect}</p:spPr>{body}</p:sp>')
 
@@ -237,47 +242,116 @@ def slide1():
         y += IN(1.0)
     return slide_xml(s, bg=NAVY)
 
-# ---------- LAMINA 2: Situacion Actual (4 tarjetas) ----------
+# ---------- Iconos (formas nativas PPT, estilo insignia CAV) ----------
+LW = 19050   # grosor de linea de glifos (~1.5pt)
+WH = 'FFFFFF'
+
+def icon_badge(idg, cx, cy, d, color):
+    return [shape(idg, cx - d // 2, cy - d // 2, d, d, fill=color,
+                  prst='ellipse', name='badge', shadow=True)]
+
+def icon_datos(idg, cx, cy):
+    w, h = IN(0.46), IN(0.6)
+    return [shape(idg, cx - w // 2, cy - h // 2, w, h, prst='can',
+                  line=WH, line_w=LW, name='db')]
+
+def icon_distribucion(idg, cx, cy):
+    s = []
+    s.append(shape(idg, cx - IN(0.44), cy - IN(0.22), IN(0.52), IN(0.36),
+                   prst='roundRect', line=WH, line_w=LW, name='cargo'))
+    s.append(shape(idg, cx + IN(0.1), cy - IN(0.04), IN(0.3), IN(0.2),
+                   prst='round1Rect', line=WH, line_w=LW, name='cab'))
+    for dx in (-IN(0.26), IN(0.18)):
+        s.append(shape(idg, cx + dx, cy + IN(0.16), IN(0.17), IN(0.17),
+                       prst='ellipse', line=WH, line_w=LW, name='wheel'))
+    return s
+
+def icon_cliente(idg, cx, cy):
+    s = []
+    s.append(shape(idg, cx - IN(0.16), cy - IN(0.36), IN(0.3), IN(0.3),
+                   prst='ellipse', line=WH, line_w=LW, name='head'))
+    s.append(shape(idg, cx - IN(0.3), cy + IN(0.0), IN(0.58), IN(0.34),
+                   prst='trapezoid', line=WH, line_w=LW, name='body'))
+    s.append(shape(idg, cx + IN(0.12), cy - IN(0.42), IN(0.24), IN(0.22),
+                   prst='heart', fill=ORANGE, name='heart'))
+    return s
+
+def icon_retail(idg, cx, cy):
+    s = []
+    s.append(shape(idg, cx - IN(0.36), cy - IN(0.34), IN(0.72), IN(0.18),
+                   prst='trapezoid', line=WH, line_w=LW, name='awning',
+                   flipv=True))
+    s.append(shape(idg, cx - IN(0.28), cy - IN(0.16), IN(0.56), IN(0.5),
+                   prst='rect', line=WH, line_w=LW, name='store'))
+    s.append(shape(idg, cx - IN(0.09), cy + IN(0.05), IN(0.18), IN(0.29),
+                   prst='rect', line=WH, line_w=LW, name='door'))
+    return s
+
+ICON_FN = {
+    'Datos': icon_datos,
+    'Distribucion': icon_distribucion,
+    'Experiencia Cliente': icon_cliente,
+    'Retail': icon_retail,
+}
+
+# ---------- LAMINA 2: Situacion Actual (4 tarjetas verticales) ----------
 def slide2():
     idg = IdGen()
-    s = header(idg, 'Situacion Actual', 'Principales desafios identificados', 2)
+    s = header(idg, 'Situacion Actual', 'El desafio de CAV', 2)
+    # parrafo introductorio (texto mejorado)
+    s.append(shape(idg, IN(0.62), IN(1.55), IN(0.1), IN(1.0), fill=ORANGE,
+                   name='introtab'))
+    s.append(textbox(idg, IN(0.85), IN(1.5), IN(11.9), IN(1.1),
+        [para(run('El Club de Amantes del Vino (CAV) enfrenta desafios '
+                  'criticos en su operacion logistica y comercial: direcciones '
+                  'de clientes inexactas que derivan en entregas fallidas, '
+                  'tiempos de despacho elevados en la Region Metropolitana y '
+                  'canales de venta que operan de forma aislada. Este programa '
+                  'aborda estos retos de manera integral, bajo una unica '
+                  'estrategia omnicanal.', sz=1400, color=DARK), after=0,
+              line=112000)]))
+    # 4 tarjetas verticales
     cards = [
-        ('Datos', BLUE, [
-            'Mas de 35.000 clientes con distintos niveles de calidad en sus direcciones.',
+        ('Datos', NAVY, [
+            'Mas de 35.000 clientes con direcciones de calidad dispar.',
             'Multiples canales de captura sin estandar unico.']),
         ('Distribucion', ORANGE, [
             'Entregas fallidas por errores de direccion.',
-            'Reprocesos logisticos.',
-            'Carga retornada al CD.']),
-        ('Experiencia Cliente', TEAL, [
-            'Retrasos en entregas.',
-            'Necesidad de aumentar entregas same day en RM.']),
-        ('Retail', NAVY, [
-            'Venta limitada al stock disponible en cada tienda.',
-            'Falta de visibilidad del inventario de toda la red.']),
+            'Reprocesos y carga retornada al CD.']),
+        ('Experiencia Cliente', NAVY, [
+            'Retrasos en las entregas.',
+            'Falta de entregas same day en la RM.']),
+        ('Retail', ORANGE, [
+            'Venta limitada al stock de cada tienda.',
+            'Sin visibilidad del inventario de la red.']),
     ]
-    # grid 2x2
-    x0, y0 = IN(0.62), IN(1.85)
-    cw, ch = IN(5.92), IN(2.42)
-    gx, gy = IN(0.26), IN(0.24)
+    x0 = IN(0.62)
+    cw = IN(2.875)
+    gx = IN(0.205)
+    y0 = IN(2.75)
+    ch = IN(4.0)
     for k, (title, color, items) in enumerate(cards):
-        cx = x0 + (k % 2) * (cw + gx)
-        cy = y0 + (k // 2) * (ch + gy)
-        s.append(shape(idg, cx, cy, cw, ch, fill=CARD, line=LINEG, line_w=9525,
+        cx = x0 + k * (cw + gx)
+        ccx = cx + cw // 2
+        # tarjeta
+        s.append(shape(idg, cx, y0, cw, ch, fill=CARD, line=LINEG, line_w=9525,
                        prst='roundRect', shadow=True, name='card'))
-        # franja de color a la izquierda
-        s.append(shape(idg, cx, cy, IN(0.12), ch, fill=color, name='tab'))
+        # insignia + icono
+        bcy = y0 + IN(0.95)
+        s += icon_badge(idg, ccx, bcy, IN(1.3), color)
+        s += ICON_FN[title](idg, ccx, bcy)
         # titulo
-        s.append(textbox(idg, cx + IN(0.32), cy + IN(0.18), cw - IN(0.5),
-                         IN(0.55),
-            [para(run(title, sz=1750, b=True, color=color), after=0)]))
-        pp = []
-        for it in items:
-            pp.append(para(run(it, sz=1300, color=DARK), bullet='•',
-                           bullet_color=color, after=260, line=100000))
-        s.append(textbox(idg, cx + IN(0.30), cy + IN(0.78), cw - IN(0.55),
-                         ch - IN(0.9), pp))
-    s += footer(idg)
+        s.append(textbox(idg, cx + IN(0.1), y0 + IN(1.75), cw - IN(0.2), IN(0.7),
+            [para(run(title, sz=1500, b=True, color=color), algn='ctr',
+                  after=0, line=96000)]))
+        # subrayado corto
+        s.append(shape(idg, ccx - IN(0.35), y0 + IN(2.42), IN(0.7), IN(0.04),
+                       fill=color, name='uline'))
+        # bullets
+        pp = [para(run(it, sz=1200, color=DARK), bullet='•', bullet_color=color,
+                   after=260, line=104000) for it in items]
+        s.append(textbox(idg, cx + IN(0.22), y0 + IN(2.62), cw - IN(0.4),
+                         ch - IN(2.75), pp))
     return slide_xml(s)
 
 # ---------- LAMINA 3: Los 4 Frentes (pilares) ----------
