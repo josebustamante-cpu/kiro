@@ -492,7 +492,7 @@ def slide4():
 # ---------- LAMINA 5: Roadmap (timeline) ----------
 def slide5():
     idg = IdGen()
-    s = header(idg, 'Roadmap', 'Hoja de ruta del programa', 5)
+    s = header(idg, 'Roadmap', 'Hoja de ruta del programa', 6)
     steps = [
         ('May - Jun', 'Evaluacion IA SimpliRoute', True, BLUE),
         ('Junio', 'Correccion masiva base de clientes', True, BLUE),
@@ -563,7 +563,7 @@ def slide5():
 # ---------- LAMINA 6: Impacto Esperado ----------
 def slide6():
     idg = IdGen()
-    s = header(idg, 'Impacto Esperado', 'Resultados en cuatro dimensiones', 6)
+    s = header(idg, 'Impacto Esperado', 'Resultados en cuatro dimensiones', 7)
     blocks = [
         ('Operacion', NAVY, ['Menos entregas fallidas.', 'Menos reprocesos.',
                              'Menos retornos al CD.']),
@@ -607,6 +607,171 @@ def slide6():
                   'reducir costos operacionales y habilitar el crecimiento '
                   'futuro del negocio.', sz=1300, color='E6EDF3', i=True),
               after=0, line=108000)]))
+    return slide_xml(s)
+
+# ---------- LAMINA: Analisis Economico (cuadro de beneficios) ----------
+def slide_economico():
+    idg = IdGen()
+    s = header(idg, 'Analisis Economico  ·  Reprocesos de Despacho',
+               'Beneficio de la gestion con Agente IA', 5)
+
+    # ---- Parametros base ----
+    fallidos_mes = 1051
+    pct_atacable = 0.75
+    pct_redespacho = 0.80
+    costo_unit = 3467
+    usd_clp = 950
+    costo_ia_mes = 1500 * usd_clp                 # 1.425.000
+    costo_ia_anio = costo_ia_mes * 12             # 17.100.000
+    hhee_valor = 7533
+    hhee_norm = 40
+    normalizacion = hhee_norm * hhee_valor        # 301.320 (inversion unica)
+
+    atacables_mes = fallidos_mes * pct_atacable   # 788,25
+    # solo el 80% que vuelve a bodega genera un redespacho de $3.467
+    redes_mes = atacables_mes * pct_redespacho    # 630,6
+    costo_total_anio = round(fallidos_mes * pct_redespacho * costo_unit * 12)
+    costo_atac_anio = round(redes_mes * costo_unit * 12)
+
+    def fmt(n, signed=False):
+        s_ = f"{abs(n):,.0f}".replace(",", ".")
+        if signed:
+            return ("+$" if n >= 0 else "-$") + s_
+        return ("-$" if n < 0 else "$") + s_
+
+    # ---- Franja de supuestos ----
+    sy = IN(1.5)
+    s.append(shape(idg, IN(0.62), sy, IN(12.1), IN(0.78), fill=DARKBOX,
+                   prst='roundRect', name='supuestos'))
+    s.append(shape(idg, IN(0.62), sy, IN(0.12), IN(0.78), fill=ORANGE))
+    s.append(textbox(idg, IN(0.95), sy + IN(0.04), IN(11.6), IN(0.55),
+        [para(run('SUPUESTOS   ', sz=1000, b=True, color=ORANGE, spc=120) +
+              run('1.051 despachos fallidos/mes  ·  75% atacable (788/mes)  ·  '
+                  '80% de los retornos genera redespacho  ·  costo redespacho '
+                  '$3.467  ·  TC $950/USD  ·  Agente IA USD 1.500/mes  ·  '
+                  'Normalizacion 40 HHEE x $7.533', sz=1000, color='E6EDF3'),
+              algn='l', after=0)], anchor='ctr'))
+
+    # ---- 3 tarjetas KPI (costo del problema e inversion) ----
+    kpis = [
+        ('REDESPACHOS ATACABLES', fmt(costo_atac_anio), 'CLP / ano (ahorro potencial)',
+         ORANGE),
+        ('INVERSION AGENTE IA', fmt(costo_ia_anio), 'CLP / ano (recurrente)',
+         NAVY),
+        ('NORMALIZACION (UNICA)', fmt(normalizacion), '40 HHEE x $7.533',
+         NAVY),
+    ]
+    x0 = IN(0.62)
+    cw = IN(3.93)
+    gx = IN(0.205)
+    ky = IN(2.42)
+    kh = IN(0.96)
+    for k, (label, val, sub, color) in enumerate(kpis):
+        cx = x0 + k * (cw + gx)
+        s.append(shape(idg, cx, ky, cw, kh, fill=CARD, line=LINEG, line_w=9525,
+                       prst='roundRect', shadow=True))
+        s.append(shape(idg, cx, ky, IN(0.12), kh, fill=color))
+        s.append(textbox(idg, cx + IN(0.3), ky + IN(0.1), cw - IN(0.45), IN(0.32),
+            [para(run(label, sz=900, b=True, color=GREY, spc=80), after=0)]))
+        s.append(textbox(idg, cx + IN(0.28), ky + IN(0.38), cw - IN(0.45), IN(0.5),
+            [para(run(val, sz=2400, b=True, color=color), after=0)]))
+        s.append(textbox(idg, cx + IN(0.32), ky + IN(0.78), cw - IN(0.45), IN(0.3),
+            [para(run(sub, sz=950, color=DARK), after=0)]))
+
+    # ---- Titulo del cuadro ----
+    ty = IN(3.5)
+    s.append(textbox(idg, IN(0.62), ty, IN(12.1), IN(0.35),
+        [para(run('Beneficio economico segun la efectividad del Agente IA '
+                  '(CLP)', sz=1300, b=True, color=NAVY), after=0)]))
+
+    # ---- Tabla de escenarios ----
+    cols = [
+        ('Escenario', 2.25, 'l'),
+        ('Casos resueltos/mes', 1.55, 'ctr'),
+        ('Ahorro mensual', 1.75, 'ctr'),
+        ('Ahorro anual', 1.85, 'ctr'),
+        ('Costo IA anual', 1.6, 'ctr'),
+        ('Beneficio neto anual', 1.9, 'ctr'),
+        ('ROI', 1.05, 'ctr'),
+    ]
+    # filas: (nombre, efectividad, color_acento, destacar)
+    escen = [
+        ('Conservador (50%)', 0.50, RED, False),
+        ('Moderado (70%)', 0.70, ORANGE, True),
+        ('Optimista (85%)', 0.85, NAVY, False),
+    ]
+
+    tx0 = IN(0.62)
+    thy = IN(3.92)
+    hh = IN(0.5)
+    rh = IN(0.6)
+
+    # encabezado de la tabla
+    cx = tx0
+    for (name, w, al) in cols:
+        cw_ = IN(w)
+        s.append(shape(idg, cx, thy, cw_, hh, fill=NAVY, prst='rect',
+                       line='FFFFFF', line_w=6350,
+                       paras=[para(run(name, sz=900, b=True, color='FFFFFF'),
+                                   algn=al, after=0, line=92000)],
+                       anchor='ctr', name='th'))
+        cx += cw_
+
+    # filas
+    ry = thy + hh
+    for ri, (name, p, acc, destacar) in enumerate(escen):
+        resueltos = round(atacables_mes * p)
+        ahorro_mes = round(redes_mes * p * costo_unit)
+        ahorro_anio = round(redes_mes * p * costo_unit * 12)
+        neto = ahorro_anio - costo_ia_anio
+        roi = neto / costo_ia_anio
+        neto_color = NAVY if neto >= 0 else RED
+        if destacar:
+            base_fill = 'FCE9D6'   # naranja claro (fila recomendada)
+        else:
+            base_fill = CARD if ri % 2 == 0 else LIGHT
+        vals = [
+            (name, 'l', acc, True),
+            (f'{resueltos}', 'ctr', DARK, False),
+            (fmt(ahorro_mes), 'ctr', DARK, False),
+            (fmt(ahorro_anio), 'ctr', DARK, True),
+            (fmt(costo_ia_anio), 'ctr', GREY, False),
+            (fmt(neto, signed=True), 'ctr', neto_color, True),
+            (f'{roi*100:+.0f}%', 'ctr', neto_color, True),
+        ]
+        cx = tx0
+        for ci, (name2, w, al) in enumerate(cols):
+            cw_ = IN(w)
+            txt, talg, tcol, tbold = vals[ci]
+            s.append(shape(idg, cx, ry, cw_, rh, fill=base_fill, prst='rect',
+                           line=LINEG, line_w=6350,
+                           paras=[para(run(txt, sz=1000, b=tbold, color=tcol),
+                                       algn=al, after=0, line=92000)],
+                           anchor='ctr', name='td'))
+            cx += cw_
+        ry += rh
+
+    # borde naranja para destacar fila recomendada
+    rec_y = thy + hh + rh   # segunda fila (Moderado)
+    s.append(shape(idg, tx0, rec_y, IN(11.95), rh, fill=None, line=ORANGE,
+                   line_w=22225, prst='rect', name='reco'))
+
+    # ---- Conclusion (caja negra) ----
+    cy = IN(6.3)
+    s.append(shape(idg, IN(0.62), cy, IN(12.1), IN(0.62), fill=DARKBOX,
+                   prst='roundRect', shadow=True))
+    s.append(shape(idg, IN(0.62), cy, IN(0.14), IN(0.62), fill=ORANGE))
+    s.append(textbox(idg, IN(0.98), cy + IN(0.07), IN(11.6), IN(0.55),
+        [para(run('CONCLUSION   ', sz=1000, b=True, color=ORANGE, spc=120) +
+              run('Punto de equilibrio en ~65% de efectividad. En el escenario '
+                  'moderado (70%) el beneficio neto es ~$1,3M CLP/ano (ROI +7%) '
+                  'y a 85% sube a ~$5,2M (ROI +30%). Inversion unica de '
+                  'normalizacion: $301.320 (40 HHEE). Calculo conservador: no '
+                  'incluye CX, ventas recuperadas ni menor inventario inmovilizado.',
+                  sz=1000, color='E6EDF3'),
+              algn='l', after=0)], anchor='ctr'))
+
+    s += footer(idg)
     return slide_xml(s)
 
 # ==================================================================
@@ -758,7 +923,8 @@ def slide_rels():
 
 # ==================================================================
 def build(path):
-    slides = [slide1(), slide2(), slide3(), slide4(), slide5(), slide6()]
+    slides = [slide1(), slide2(), slide3(), slide4(), slide_economico(),
+              slide5(), slide6()]
     n = len(slides)
     overrides = '\n'.join(
         f'<Override PartName="/ppt/slides/slide{i+1}.xml" '
