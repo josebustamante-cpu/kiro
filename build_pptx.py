@@ -492,7 +492,7 @@ def slide4():
 # ---------- LAMINA 5: Roadmap (timeline) ----------
 def slide5():
     idg = IdGen()
-    s = header(idg, 'Roadmap', 'Hoja de ruta del programa', 6)
+    s = header(idg, 'Roadmap', 'Hoja de ruta del programa', 7)
     steps = [
         ('May - Jun', 'Evaluacion IA SimpliRoute', True, BLUE),
         ('Junio', 'Correccion masiva base de clientes', True, BLUE),
@@ -563,7 +563,7 @@ def slide5():
 # ---------- LAMINA 6: Impacto Esperado ----------
 def slide6():
     idg = IdGen()
-    s = header(idg, 'Impacto Esperado', 'Resultados en cuatro dimensiones', 7)
+    s = header(idg, 'Impacto Esperado', 'Resultados en cuatro dimensiones', 8)
     blocks = [
         ('Operacion', NAVY, ['Menos entregas fallidas.', 'Menos reprocesos.',
                              'Menos retornos al CD.']),
@@ -609,169 +609,226 @@ def slide6():
               after=0, line=108000)]))
     return slide_xml(s)
 
-# ---------- LAMINA: Analisis Economico (cuadro de beneficios) ----------
-def slide_economico():
-    idg = IdGen()
-    s = header(idg, 'Analisis Economico  ·  Reprocesos de Despacho',
-               'Beneficio de la gestion con Agente IA', 5)
+# ---------- Modelo economico (parametros compartidos) ----------
+FALLIDOS_MES = 1051
+PCT_ATAC = 0.75
+PCT_REDES = 0.80
+COSTO_UNIT = 3467
+USD_CLP = 950
+COSTO_IA_MES = 1500 * USD_CLP            # 1.425.000
+COSTO_IA_ANIO = COSTO_IA_MES * 12        # 17.100.000
+HHEE_VALOR = 7533
+HHEE_NORM = 40
+NORMALIZACION = HHEE_NORM * HHEE_VALOR    # 301.320 (inversion unica)
 
-    # ---- Parametros base ----
-    fallidos_mes = 1051
-    pct_atacable = 0.75
-    pct_redespacho = 0.80
-    costo_unit = 3467
-    usd_clp = 950
-    costo_ia_mes = 1500 * usd_clp                 # 1.425.000
-    costo_ia_anio = costo_ia_mes * 12             # 17.100.000
-    hhee_valor = 7533
-    hhee_norm = 40
-    normalizacion = hhee_norm * hhee_valor        # 301.320 (inversion unica)
 
-    atacables_mes = fallidos_mes * pct_atacable   # 788,25
-    # solo el 80% que vuelve a bodega genera un redespacho de $3.467
-    redes_mes = atacables_mes * pct_redespacho    # 630,6
-    costo_total_anio = round(fallidos_mes * pct_redespacho * costo_unit * 12)
-    costo_atac_anio = round(redes_mes * costo_unit * 12)
+def clp(n, signed=False):
+    """Formatea un numero como pesos chilenos: $1.234.567 / +$.. / -$.."""
+    s_ = f"{abs(int(round(n))):,.0f}".replace(",", ".")
+    if signed:
+        return ("+$" if n >= 0 else "-$") + s_
+    return ("-$" if n < 0 else "$") + s_
 
-    def fmt(n, signed=False):
-        s_ = f"{abs(n):,.0f}".replace(",", ".")
-        if signed:
-            return ("+$" if n >= 0 else "-$") + s_
-        return ("-$" if n < 0 else "$") + s_
 
-    # ---- Franja de supuestos ----
-    sy = IN(1.5)
+def draw_table(idg, x, y, col_defs, rows, header_h=0.45, row_h=0.5,
+               header_fill=NAVY, header_sz=950, cell_sz=1000):
+    """Dibuja una tabla. col_defs: [(titulo, ancho_in, alineacion)].
+    rows: [(celdas, fill)] donde celdas=[(texto, color, bold)] y fill=hex|None."""
+    sh = []
+    cx = x
+    for (htext, w, al) in col_defs:
+        cw = IN(w)
+        sh.append(shape(idg, cx, y, cw, IN(header_h), fill=header_fill,
+                        line='FFFFFF', line_w=6350,
+                        paras=[para(run(htext, sz=header_sz, b=True,
+                                        color='FFFFFF'), algn=al, after=0,
+                                    line=90000)], anchor='ctr', name='th'))
+        cx += cw
+    ry = y + IN(header_h)
+    for ri, (cells, rfill) in enumerate(rows):
+        fill = rfill if rfill else (CARD if ri % 2 == 0 else LIGHT)
+        cx = x
+        for ci, (_h, w, al) in enumerate(col_defs):
+            cw = IN(w)
+            txt, col, bold = cells[ci]
+            sh.append(shape(idg, cx, ry, cw, IN(row_h), fill=fill,
+                            line=LINEG, line_w=6350,
+                            paras=[para(run(txt, sz=cell_sz, b=bold, color=col),
+                                        algn=al, after=0, line=90000)],
+                            anchor='ctr', name='td'))
+            cx += cw
+        ry += IN(row_h)
+    return sh, ry
+
+
+def supuestos_strip(idg, sy):
+    s = []
     s.append(shape(idg, IN(0.62), sy, IN(12.1), IN(0.78), fill=DARKBOX,
                    prst='roundRect', name='supuestos'))
     s.append(shape(idg, IN(0.62), sy, IN(0.12), IN(0.78), fill=ORANGE))
-    s.append(textbox(idg, IN(0.95), sy + IN(0.04), IN(11.6), IN(0.55),
+    s.append(textbox(idg, IN(0.95), sy + IN(0.04), IN(11.6), IN(0.62),
         [para(run('SUPUESTOS   ', sz=1000, b=True, color=ORANGE, spc=120) +
-              run('1.051 despachos fallidos/mes  ·  75% atacable (788/mes)  ·  '
-                  '80% de los retornos genera redespacho  ·  costo redespacho '
-                  '$3.467  ·  TC $950/USD  ·  Agente IA USD 1.500/mes  ·  '
-                  'Normalizacion 40 HHEE x $7.533', sz=1000, color='E6EDF3'),
-              algn='l', after=0)], anchor='ctr'))
-
-    # ---- 3 tarjetas KPI (costo del problema e inversion) ----
-    kpis = [
-        ('REDESPACHOS ATACABLES', fmt(costo_atac_anio), 'CLP / ano (ahorro potencial)',
-         ORANGE),
-        ('INVERSION AGENTE IA', fmt(costo_ia_anio), 'CLP / ano (recurrente)',
-         NAVY),
-        ('NORMALIZACION (UNICA)', fmt(normalizacion), '40 HHEE x $7.533',
-         NAVY),
-    ]
-    x0 = IN(0.62)
-    cw = IN(3.93)
-    gx = IN(0.205)
-    ky = IN(2.42)
-    kh = IN(0.96)
-    for k, (label, val, sub, color) in enumerate(kpis):
-        cx = x0 + k * (cw + gx)
-        s.append(shape(idg, cx, ky, cw, kh, fill=CARD, line=LINEG, line_w=9525,
-                       prst='roundRect', shadow=True))
-        s.append(shape(idg, cx, ky, IN(0.12), kh, fill=color))
-        s.append(textbox(idg, cx + IN(0.3), ky + IN(0.1), cw - IN(0.45), IN(0.32),
-            [para(run(label, sz=900, b=True, color=GREY, spc=80), after=0)]))
-        s.append(textbox(idg, cx + IN(0.28), ky + IN(0.38), cw - IN(0.45), IN(0.5),
-            [para(run(val, sz=2400, b=True, color=color), after=0)]))
-        s.append(textbox(idg, cx + IN(0.32), ky + IN(0.78), cw - IN(0.45), IN(0.3),
-            [para(run(sub, sz=950, color=DARK), after=0)]))
-
-    # ---- Titulo del cuadro ----
-    ty = IN(3.5)
-    s.append(textbox(idg, IN(0.62), ty, IN(12.1), IN(0.35),
-        [para(run('Beneficio economico segun la efectividad del Agente IA '
-                  '(CLP)', sz=1300, b=True, color=NAVY), after=0)]))
-
-    # ---- Tabla de escenarios ----
-    cols = [
-        ('Escenario', 2.25, 'l'),
-        ('Casos resueltos/mes', 1.55, 'ctr'),
-        ('Ahorro mensual', 1.75, 'ctr'),
-        ('Ahorro anual', 1.85, 'ctr'),
-        ('Costo IA anual', 1.6, 'ctr'),
-        ('Beneficio neto anual', 1.9, 'ctr'),
-        ('ROI', 1.05, 'ctr'),
-    ]
-    # filas: (nombre, efectividad, color_acento, destacar)
-    escen = [
-        ('Conservador (50%)', 0.50, RED, False),
-        ('Moderado (70%)', 0.70, ORANGE, True),
-        ('Optimista (85%)', 0.85, NAVY, False),
-    ]
-
-    tx0 = IN(0.62)
-    thy = IN(3.92)
-    hh = IN(0.5)
-    rh = IN(0.6)
-
-    # encabezado de la tabla
-    cx = tx0
-    for (name, w, al) in cols:
-        cw_ = IN(w)
-        s.append(shape(idg, cx, thy, cw_, hh, fill=NAVY, prst='rect',
-                       line='FFFFFF', line_w=6350,
-                       paras=[para(run(name, sz=900, b=True, color='FFFFFF'),
-                                   algn=al, after=0, line=92000)],
-                       anchor='ctr', name='th'))
-        cx += cw_
-
-    # filas
-    ry = thy + hh
-    for ri, (name, p, acc, destacar) in enumerate(escen):
-        resueltos = round(atacables_mes * p)
-        ahorro_mes = round(redes_mes * p * costo_unit)
-        ahorro_anio = round(redes_mes * p * costo_unit * 12)
-        neto = ahorro_anio - costo_ia_anio
-        roi = neto / costo_ia_anio
-        neto_color = NAVY if neto >= 0 else RED
-        if destacar:
-            base_fill = 'FCE9D6'   # naranja claro (fila recomendada)
-        else:
-            base_fill = CARD if ri % 2 == 0 else LIGHT
-        vals = [
-            (name, 'l', acc, True),
-            (f'{resueltos}', 'ctr', DARK, False),
-            (fmt(ahorro_mes), 'ctr', DARK, False),
-            (fmt(ahorro_anio), 'ctr', DARK, True),
-            (fmt(costo_ia_anio), 'ctr', GREY, False),
-            (fmt(neto, signed=True), 'ctr', neto_color, True),
-            (f'{roi*100:+.0f}%', 'ctr', neto_color, True),
-        ]
-        cx = tx0
-        for ci, (name2, w, al) in enumerate(cols):
-            cw_ = IN(w)
-            txt, talg, tcol, tbold = vals[ci]
-            s.append(shape(idg, cx, ry, cw_, rh, fill=base_fill, prst='rect',
-                           line=LINEG, line_w=6350,
-                           paras=[para(run(txt, sz=1000, b=tbold, color=tcol),
-                                       algn=al, after=0, line=92000)],
-                           anchor='ctr', name='td'))
-            cx += cw_
-        ry += rh
-
-    # borde naranja para destacar fila recomendada
-    rec_y = thy + hh + rh   # segunda fila (Moderado)
-    s.append(shape(idg, tx0, rec_y, IN(11.95), rh, fill=None, line=ORANGE,
-                   line_w=22225, prst='rect', name='reco'))
-
-    # ---- Conclusion (caja negra) ----
-    cy = IN(6.3)
-    s.append(shape(idg, IN(0.62), cy, IN(12.1), IN(0.62), fill=DARKBOX,
-                   prst='roundRect', shadow=True))
-    s.append(shape(idg, IN(0.62), cy, IN(0.14), IN(0.62), fill=ORANGE))
-    s.append(textbox(idg, IN(0.98), cy + IN(0.07), IN(11.6), IN(0.55),
-        [para(run('CONCLUSION   ', sz=1000, b=True, color=ORANGE, spc=120) +
-              run('Punto de equilibrio en ~65% de efectividad. En el escenario '
-                  'moderado (70%) el beneficio neto es ~$1,3M CLP/ano (ROI +7%) '
-                  'y a 85% sube a ~$5,2M (ROI +30%). Inversion unica de '
-                  'normalizacion: $301.320 (40 HHEE). Calculo conservador: no '
-                  'incluye CX, ventas recuperadas ni menor inventario inmovilizado.',
+              run('1.051 despachos fallidos/mes (promedio 13 meses)  ·  75% '
+                  'atacable (788/mes)  ·  80% de los retornos genera redespacho '
+                  ' ·  costo del redespacho $3.467  ·  TC $950/USD  ·  Agente '
+                  'IA USD 1.500/mes  ·  Normalizacion 40 HHEE x $7.533',
                   sz=1000, color='E6EDF3'),
               algn='l', after=0)], anchor='ctr'))
+    return s
 
-    s += footer(idg)
+
+# ---------- LAMINA: Analisis Economico (1) Dimension del problema ----------
+def slide_econo_problema():
+    idg = IdGen()
+    s = header(idg, 'Analisis Economico (1)  ·  Dimension del Problema',
+               'Costo actual de los redespachos', 5)
+
+    m = FALLIDOS_MES
+    u = COSTO_UNIT
+    # franja de supuestos
+    s += supuestos_strip(idg, IN(1.5))
+
+    # ---- Cuadro 1 (tabla, lado izquierdo) ----
+    s.append(textbox(idg, IN(0.62), IN(2.42), IN(7.2), IN(0.32),
+        [para(run('Cuadro 1  ·  Dimension del problema (costo actual)',
+                  sz=1250, b=True, color=NAVY), after=0)]))
+
+    NV = 'E4ECF3'   # tinte navy claro
+    OR = 'FCE9D6'   # tinte naranja claro
+    cols = [('Concepto', 3.55, 'l'), ('Mensual', 1.75, 'ctr'),
+            ('Anual', 1.85, 'ctr')]
+
+    def r(c, mes, anio, fill=None, bold=False, ccol=DARK, vcol=DARK):
+        return ([(c, ccol, bold), (mes, vcol, bold), (anio, vcol, bold)], fill)
+
+    rows = [
+        r('Despachos fallidos', '1.051', '12.612'),
+        r('Costo unitario del redespacho', '$3.467', '$3.467'),
+        r('Redespachos (80% de los fallidos)', str(round(m*PCT_REDES)),
+          str(round(m*PCT_REDES*12))),
+        r('Costo total de redespachos', clp(m*PCT_REDES*u),
+          clp(m*PCT_REDES*u*12), fill=NV, bold=True, ccol=NAVY, vcol=NAVY),
+        r('Fallidos atacables (75%)', str(round(m*PCT_ATAC)),
+          str(round(m*PCT_ATAC*12))),
+        r('Redespachos atacables (75% x 80%)', str(round(m*PCT_ATAC*PCT_REDES)),
+          str(round(m*PCT_ATAC*PCT_REDES*12))),
+        r('Costo de redespachos atacables', clp(m*PCT_ATAC*PCT_REDES*u),
+          clp(m*PCT_ATAC*PCT_REDES*u*12), fill=OR, bold=True, ccol=ORANGE,
+          vcol=ORANGE),
+    ]
+    tbl, _ = draw_table(idg, IN(0.62), IN(2.78), cols, rows,
+                        header_h=0.45, row_h=0.5)
+    s += tbl
+
+    # ---- Tarjetas de resumen (lado derecho) ----
+    cards = [
+        ('COSTO TOTAL DE REDESPACHOS', clp(m*PCT_REDES*u*12),
+         'CLP / ano  (100% de los fallidos)', NAVY),
+        ('COSTO ATACABLE POR EL PROYECTO', clp(m*PCT_ATAC*PCT_REDES*u*12),
+         'CLP / ano  (75% x 80%)', ORANGE),
+    ]
+    cx = IN(8.05)
+    cwd = IN(4.67)
+    cy = IN(2.78)
+    chh = IN(1.55)
+    for label, val, sub, color in cards:
+        s.append(shape(idg, cx, cy, cwd, chh, fill=CARD, line=LINEG,
+                       line_w=9525, prst='roundRect', shadow=True))
+        s.append(shape(idg, cx, cy, IN(0.13), chh, fill=color))
+        s.append(textbox(idg, cx + IN(0.32), cy + IN(0.18), cwd - IN(0.5),
+                         IN(0.4),
+            [para(run(label, sz=1000, b=True, color=GREY, spc=80), after=0,
+                  line=96000)]))
+        s.append(textbox(idg, cx + IN(0.3), cy + IN(0.6), cwd - IN(0.5), IN(0.6),
+            [para(run(val, sz=2800, b=True, color=color), after=0)]))
+        s.append(textbox(idg, cx + IN(0.34), cy + IN(1.16), cwd - IN(0.5),
+                         IN(0.35),
+            [para(run(sub, sz=1000, color=DARK), after=0)]))
+        cy += chh + IN(0.15)
+
+    # nota al pie
+    s.append(textbox(idg, IN(0.62), IN(6.82), IN(12.1), IN(0.4),
+        [para(run('* 3 casuisticas atacables: nadie en casa  ·  direccion '
+                  'erronea / no encontrada  ·  cliente ya no vive en la '
+                  'direccion.', sz=900, i=True, color=GREY), after=0)]))
+    return slide_xml(s)
+
+
+# ---------- LAMINA: Analisis Economico (2) Ahorro y Beneficio ----------
+def slide_econo_beneficio():
+    idg = IdGen()
+    s = header(idg, 'Analisis Economico (2)  ·  Ahorro y Beneficio',
+               'Retorno del Agente IA', 6)
+
+    m = FALLIDOS_MES
+    u = COSTO_UNIT
+    base_m = m * PCT_ATAC * PCT_REDES * u      # ahorro maximo mensual
+    OR = 'FCE9D6'
+    escen = [('Conservador (50%)', 0.50), ('Moderado (70%)', 0.70),
+             ('Optimista (85%)', 0.85)]
+
+    # ---- Cuadro 2: Ahorro potencial ----
+    s.append(textbox(idg, IN(0.62), IN(1.5), IN(12.1), IN(0.32),
+        [para(run('Cuadro 2  ·  Ahorro potencial segun efectividad del Agente '
+                  'IA', sz=1250, b=True, color=NAVY), after=0)]))
+    cols2 = [('Escenario', 3.25, 'l'), ('Casos resueltos/mes', 2.6, 'ctr'),
+             ('Ahorro mensual', 3.05, 'ctr'), ('Ahorro anual', 3.05, 'ctr')]
+    rows2 = []
+    for i, (name, p) in enumerate(escen):
+        fill = OR if i == 1 else None
+        bold = (i == 1)
+        rows2.append((
+            [(name, NAVY if i == 1 else DARK, True),
+             (str(round(m*PCT_ATAC*p)), DARK, bold),
+             (clp(base_m*p), DARK, bold),
+             (clp(base_m*p*12), DARK, True)], fill))
+    t2y = IN(1.85)
+    tbl2, _ = draw_table(idg, IN(0.62), t2y, cols2, rows2,
+                         header_h=0.45, row_h=0.52)
+    s += tbl2
+    # borde naranja fila Moderado
+    s.append(shape(idg, IN(0.62), t2y + IN(0.45) + IN(0.52), IN(11.95), IN(0.52),
+                   fill=None, line=ORANGE, line_w=22225, prst='rect'))
+
+    # ---- Cuadro 3: Beneficio neto y ROI ----
+    s.append(textbox(idg, IN(0.62), IN(3.98), IN(12.1), IN(0.32),
+        [para(run('Cuadro 3  ·  Beneficio neto y ROI (descontando el Agente IA: '
+                  '$17.100.000/ano)', sz=1250, b=True, color=NAVY), after=0)]))
+    cols3 = [('Escenario', 2.55, 'l'), ('Ahorro anual', 2.55, 'ctr'),
+             ('Costo Agente IA', 2.5, 'ctr'),
+             ('Beneficio neto anual', 2.85, 'ctr'), ('ROI', 1.5, 'ctr')]
+    rows3 = []
+    for i, (name, p) in enumerate(escen):
+        ah_a = round(base_m * p * 12)
+        neto = ah_a - COSTO_IA_ANIO
+        roi = neto / COSTO_IA_ANIO
+        ncol = NAVY if neto >= 0 else RED
+        fill = OR if i == 1 else None
+        rows3.append((
+            [(name, NAVY if i == 1 else DARK, True),
+             (clp(ah_a), DARK, False),
+             (clp(COSTO_IA_ANIO), GREY, False),
+             (clp(neto, signed=True), ncol, True),
+             (f'{roi*100:+.0f}%', ncol, True)], fill))
+    t3y = IN(4.32)
+    tbl3, _ = draw_table(idg, IN(0.62), t3y, cols3, rows3,
+                         header_h=0.45, row_h=0.52)
+    s += tbl3
+    s.append(shape(idg, IN(0.62), t3y + IN(0.45) + IN(0.52), IN(11.95), IN(0.52),
+                   fill=None, line=ORANGE, line_w=22225, prst='rect'))
+
+    # ---- Conclusion ----
+    cy = IN(6.42)
+    s.append(shape(idg, IN(0.62), cy, IN(12.1), IN(0.6), fill=DARKBOX,
+                   prst='roundRect', shadow=True))
+    s.append(shape(idg, IN(0.62), cy, IN(0.14), IN(0.6), fill=ORANGE))
+    s.append(textbox(idg, IN(0.98), cy + IN(0.05), IN(11.6), IN(0.55),
+        [para(run('CONCLUSION   ', sz=1000, b=True, color=ORANGE, spc=120) +
+              run('Punto de equilibrio ~65% de efectividad. Inversion unica de '
+                  'normalizacion: $301.320 (40 HHEE x $7.533). Cifras '
+                  'conservadoras: no incluyen mejor CX, ventas recuperadas ni '
+                  'menor inventario inmovilizado.', sz=1000, color='E6EDF3'),
+              algn='l', after=0)], anchor='ctr'))
     return slide_xml(s)
 
 # ==================================================================
@@ -923,8 +980,8 @@ def slide_rels():
 
 # ==================================================================
 def build(path):
-    slides = [slide1(), slide2(), slide3(), slide4(), slide_economico(),
-              slide5(), slide6()]
+    slides = [slide1(), slide2(), slide3(), slide4(), slide_econo_problema(),
+              slide_econo_beneficio(), slide5(), slide6()]
     n = len(slides)
     overrides = '\n'.join(
         f'<Override PartName="/ppt/slides/slide{i+1}.xml" '
