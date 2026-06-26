@@ -118,7 +118,7 @@ STYLES = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>
 </borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="14">
+<cellXfs count="15">
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
 <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
 <xf numFmtId="0" fontId="1" fillId="4" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
@@ -133,6 +133,7 @@ STYLES = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
 <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
 <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>'''
@@ -542,11 +543,107 @@ def build_3anos():
 
 
 # ----------------------------------------------------------------------
+# HOJA 1: Resumen Ejecutivo (para el directorio)
+# ----------------------------------------------------------------------
+def build_resumen():
+    sh = Sheet('Resumen Ejecutivo')
+    sh.widths = [(1, 50), (2, 20), (3, 22)]
+    N = S['Nbase']
+    Nc = A['Nbase']
+    m = model(N)
+    mg = S['margen']
+    courier = S['courier_unit'] * S['envios']
+    tot_e = m['tot_e']
+    venta_e = tot_e / (1 - mg)
+    cap_mes = S['cap'] * S['dias'] * N
+
+    sh.text(1, 1, 'RESUMEN EJECUTIVO  -  Internalizacion de Ultima Milla', 1)
+    sh.text(2, 1, 'Evaluacion: flota propia electrica vs. courier actual  (CAV)',
+            12)
+
+    # --- Cifras clave (escenario base: flota electrica N moviles) ---
+    sh.text(4, 1, 'CIFRAS CLAVE  (escenario base: flota electrica)', 2)
+    sh.text(4, 2, '', 2)
+    rows = [
+        ('Envios por mes', A['envios'], S['envios'], 11),
+        ('N de moviles (escenario base)', Nc, N, 11),
+        ('Costo courier actual (por envio)', A['courier'], S['courier_unit'], 8),
+        ('Costo courier (por mes)', f'{A["courier"]}*{A["envios"]}', courier, 8),
+        ('Costo flota electrica (por mes)', f_tot_e(Nc), tot_e, 8),
+        ('Costo flota electrica (por envio)', f'B9/{A["envios"]}',
+         tot_e / S['envios'], 8),
+        ('Ahorro mensual vs courier', f'B8-B9', courier - tot_e, 8),
+        ('Ahorro ANUAL vs courier', f'(B8-B9)*12', (courier - tot_e) * 12, 9),
+        ('Reduccion de costo', f'(B8-B9)/B8', (courier - tot_e) / courier, 10),
+        ('Utilizacion de capacidad', f'{A["envios"]}/({A["cap"]}*{A["dias"]}*{Nc})',
+         S['envios'] / cap_mes, 10),
+        ('Punto de equilibrio (envios/mes)', f'B9/{A["courier"]}',
+         tot_e / S['courier_unit'], 11),
+        ('Tarifa con margen objetivo (por envio)', f'B10/(1-{A["margen"]})',
+         (tot_e / S['envios']) / (1 - mg), 9),
+        ('Margen ANUAL como operador logistico',
+         f'(B9/(1-{A["margen"]})-B9)*12', (venta_e - tot_e) * 12, 9),
+    ]
+    # encabezado tabla
+    sh.text(5, 1, 'Indicador', 7)
+    sh.text(5, 2, 'Valor', 7)
+    r = 6
+    for label, fml, val, st in rows:
+        sh.text(r, 1, label, 13)
+        sh.formula(r, 2, fml, val, st)
+        r += 1
+
+    # --- Lectura para el directorio ---
+    r += 1
+    sh.text(r, 1, 'LECTURA PARA EL DIRECTORIO', 2); sh.text(r, 2, '', 2); r += 1
+    bullets = [
+        '1. Internalizar la ultima milla reduce el costo de despacho ~33%: de '
+        '$2.980 a ~$1.987 por envio, con un ahorro de ~$179 millones al ano.',
+        '2. La flota actual estaria sobredimensionada: con capacidad de 120 '
+        'puntos por ruta, bastan 6-7 moviles para cubrir los 15.000 envios. Con '
+        '7 operamos al 81% y queda holgura para crecer sin sumar vehiculos.',
+        '3. Electrico vs petrolero: hoy practicamente empatan en costo. En 3 '
+        'anos, con el diesel subiendo mas rapido, el electrico pasa a ser mas '
+        'barato desde el Ano 2 y amplia su ventaja (mas sostenibilidad e imagen).',
+        '4. Como operador logistico podemos ser mas baratos Y rentables: una '
+        'tarifa con 30% de margen (~$2.840/envio) sigue ~5% bajo el courier '
+        'actual, con un margen potencial de ~$153 millones al ano.',
+    ]
+    for b in bullets:
+        sh.text(r, 1, b, 14); r += 1
+
+    r += 1
+    sh.text(r, 1, 'RECOMENDACION', 2); sh.text(r, 2, '', 2); r += 1
+    sh.text(r, 1, 'Avanzar hacia una flota propia de 7 moviles electricos (mejor '
+            'balance entre ahorro y holgura operacional). Como alternativa de '
+            'menor riesgo inicial, evaluar un modelo hibrido: flota propia para '
+            'la base estable + courier para los peaks.', 14); r += 2
+
+    sh.text(r, 1, 'RIESGOS Y CONDICIONES', 2); sh.text(r, 2, '', 2); r += 1
+    riesgos = [
+        '- Sobrekilometraje: con 7 moviles cada uno recorre ~4.300 km/mes '
+        '(contrato 3.000). Ya esta en el costo; conviene negociar el limite de km.',
+        '- Costo fijo vs variable: la flota conviene mientras el volumen supere '
+        '~10.000 envios/mes; bajo ese nivel el courier vuelve a ser preferible.',
+        '- Gestion de personas: se asumen 14 colaboradores (conductores + '
+        'peonetas) con su administracion y relacion laboral.',
+    ]
+    for b in riesgos:
+        sh.text(r, 1, b, 14); r += 1
+
+    r += 1
+    sh.text(r, 1, 'Nota: todas las cifras se recalculan al editar la hoja '
+            '"Supuestos" (celdas amarillas). Valores de referencia a confirmar '
+            'con cotizaciones formales.', 14)
+    return sh
+
+
+# ----------------------------------------------------------------------
 # Ensamblado del paquete .xlsx
 # ----------------------------------------------------------------------
 def build(path):
-    sheets = [build_supuestos(), build_escenarios(), build_focus(),
-              build_tarifa(), build_3anos()]
+    sheets = [build_resumen(), build_supuestos(), build_escenarios(),
+              build_focus(), build_tarifa(), build_3anos()]
     n = len(sheets)
 
     ct = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
