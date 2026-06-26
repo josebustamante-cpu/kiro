@@ -16,7 +16,7 @@ S = dict(
     leas_e=34, leas_p=27, kwh=150, cons=0.25, diesel=1050, rend=10, infra=25000,
     cond=1200000, peon_pct=0.30, multas=500000, overfijo=2770000, telem=13000,
     alza_diesel=0.08, alza_elec=0.03, reaj_courier=0.05, reaj_uf=0.035,
-    reaj_sueldo=0.04,
+    reaj_sueldo=0.04, margen=0.30,
 )
 
 
@@ -197,6 +197,10 @@ def build_supuestos():
     inp(36, 'Reajuste anual courier', 'reaj_courier', 5)
     inp(37, 'Reajuste anual UF / leasing', 'reaj_uf', 5)
     inp(38, 'Reajuste anual sueldos / overhead', 'reaj_sueldo', 5)
+
+    sh.text(40, 1, 'TARIFA / MARGEN (operador logistico)', 2)
+    sh.text(40, 2, '', 2); sh.text(40, 3, '', 2)
+    inp(41, 'Margen objetivo (% sobre venta)', 'margen', 5)
     return sh
 
 
@@ -211,7 +215,7 @@ A = dict(envios='Supuestos!$B$5', dias='Supuestos!$B$6', cap='Supuestos!$B$7',
          overfijo='Supuestos!$B$30', telem='Supuestos!$B$31',
          alza_d='Supuestos!$B$34', alza_e='Supuestos!$B$35',
          reaj_c='Supuestos!$B$36', reaj_uf='Supuestos!$B$37',
-         reaj_s='Supuestos!$B$38')
+         reaj_s='Supuestos!$B$38', margen='Supuestos!$B$41')
 
 
 def f_personal(N):
@@ -364,6 +368,94 @@ def build_focus():
 
 
 # ----------------------------------------------------------------------
+# HOJA: Tarifa y Margen (operador logistico)
+# ----------------------------------------------------------------------
+def build_tarifa():
+    sh = Sheet('Tarifa y Margen')
+    sh.widths = [(1, 34), (2, 16), (3, 16), (4, 16)]
+    N = S['Nbase']
+    Nc = A['Nbase']
+    m = model(N)
+    mg = S['margen']
+    courier = S['courier_unit'] * S['envios']
+    # precio (venta) = costo / (1 - margen)  -> margen sobre venta
+    venta_e = m['tot_e'] / (1 - mg)
+    venta_p = m['tot_p'] / (1 - mg)
+
+    sh.text(1, 1, 'TARIFA COMO OPERADOR LOGISTICO  (margen objetivo sobre venta)', 1)
+    sh.text(2, 1, 'Tarifa que debes cobrar para cubrir costos y dejar el margen '
+                  'de Supuestos!B41. Compara contra el courier ($/envio actual).',
+            12)
+    sh.text(3, 1, 'Margen objetivo:', 12)
+    sh.formula(3, 2, A['margen'], mg, 10)
+
+    for c, h in enumerate(['Concepto', 'Flota Electrica', 'Flota Petrolera',
+                           'Courier (ref.)'], 1):
+        sh.text(5, c, h, 7)
+
+    # fila 6: costo total
+    sh.text(6, 1, 'Costo total / mes', 13)
+    sh.formula(6, 2, f_tot_e(Nc), m['tot_e'], 8)
+    sh.formula(6, 3, f_tot_p(Nc), m['tot_p'], 8)
+    sh.formula(6, 4, f'{A["courier"]}*{A["envios"]}', courier, 8)
+    # fila 7: costo por envio
+    sh.text(7, 1, 'Costo por envio', 13)
+    sh.formula(7, 2, f'B6/{A["envios"]}', m['tot_e'] / S['envios'], 8)
+    sh.formula(7, 3, f'C6/{A["envios"]}', m['tot_p'] / S['envios'], 8)
+    sh.formula(7, 4, A['courier'], S['courier_unit'], 8)
+    # fila 8: TARIFA por envio (con margen)
+    sh.text(8, 1, 'TARIFA por envio (con margen)', 12)
+    sh.formula(8, 2, f'B7/(1-{A["margen"]})', m['tot_e'] / S['envios'] / (1 - mg), 9)
+    sh.formula(8, 3, f'C7/(1-{A["margen"]})', m['tot_p'] / S['envios'] / (1 - mg), 9)
+    sh.formula(8, 4, A['courier'], S['courier_unit'], 9)
+    # fila 9: facturacion mensual
+    sh.text(9, 1, 'Facturacion / mes (a esa tarifa)', 13)
+    sh.formula(9, 2, f'B6/(1-{A["margen"]})', venta_e, 8)
+    sh.formula(9, 3, f'C6/(1-{A["margen"]})', venta_p, 8)
+    # fila 10: margen $ mensual
+    sh.text(10, 1, 'Margen $ / mes', 13)
+    sh.formula(10, 2, 'B9-B6', venta_e - m['tot_e'], 8)
+    sh.formula(10, 3, 'C9-C6', venta_p - m['tot_p'], 8)
+    # fila 11: margen $ anual
+    sh.text(11, 1, 'Margen $ / ano', 13)
+    sh.formula(11, 2, 'B10*12', (venta_e - m['tot_e']) * 12, 9)
+    sh.formula(11, 3, 'C10*12', (venta_p - m['tot_p']) * 12, 9)
+    # fila 12: tarifa vs courier
+    sh.text(12, 1, 'Tarifa vs courier (ahorro/envio)', 13)
+    sh.formula(12, 2, f'{A["courier"]}-B8',
+               S['courier_unit'] - m['tot_e'] / S['envios'] / (1 - mg), 9)
+    sh.formula(12, 3, f'{A["courier"]}-C8',
+               S['courier_unit'] - m['tot_p'] / S['envios'] / (1 - mg), 9)
+    # fila 13: % bajo el courier
+    sh.text(13, 1, 'Tarifa % bajo el courier', 13)
+    sh.formula(13, 2, f'({A["courier"]}-B8)/{A["courier"]}',
+               (S['courier_unit'] - m['tot_e'] / S['envios'] / (1 - mg)) / S['courier_unit'], 10)
+    sh.formula(13, 3, f'({A["courier"]}-C8)/{A["courier"]}',
+               (S['courier_unit'] - m['tot_p'] / S['envios'] / (1 - mg)) / S['courier_unit'], 10)
+
+    # tabla por tamano de flota
+    sh.text(15, 1, 'TARIFA POR ENVIO SEGUN TAMANO DE FLOTA (con margen objetivo)', 2)
+    for c, h in enumerate(['Moviles (N)', 'Tarifa Elec.', 'Tarifa Pet.',
+                           'Courier (ref.)'], 1):
+        sh.text(16, c, h, 7)
+    r = 17
+    for Nn in [10, 9, 8, 7, 6]:
+        mm = model(Nn)
+        Ncell = f'$A{r}'
+        sh.num(r, 1, Nn, 11)
+        sh.formula(r, 2, f'({f_tot_e(Ncell)})/{A["envios"]}/(1-{A["margen"]})',
+                   mm['tot_e'] / S['envios'] / (1 - mg), 8)
+        sh.formula(r, 3, f'({f_tot_p(Ncell)})/{A["envios"]}/(1-{A["margen"]})',
+                   mm['tot_p'] / S['envios'] / (1 - mg), 8)
+        sh.formula(r, 4, A['courier'], S['courier_unit'], 8)
+        r += 1
+    sh.text(r + 1, 1, 'Nota: margen sobre venta -> tarifa = costo / (1 - margen). '
+                      'Si la tarifa es menor al courier, eres competitivo Y rentable.',
+            12)
+    return sh
+
+
+# ----------------------------------------------------------------------
 # HOJA 4: Proyeccion a 3 anos (con alza de combustible)
 # ----------------------------------------------------------------------
 def build_3anos():
@@ -454,7 +546,7 @@ def build_3anos():
 # ----------------------------------------------------------------------
 def build(path):
     sheets = [build_supuestos(), build_escenarios(), build_focus(),
-              build_3anos()]
+              build_tarifa(), build_3anos()]
     n = len(sheets)
 
     ct = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
